@@ -67,6 +67,16 @@ def test_upload_to_report(client, tmp_path):
                                                    "safety_margin": 0.4}).json()
     assert r2["summary"]["firm_mwh"] <= s["firm_mwh"] + 1e-9
 
+    # Forecast mode decides without hindsight; anything that would have broken a
+    # rule given what actually happened is dropped, never reported.
+    r3 = client.post("/api/sites/demo/runs", json={"price_threshold_per_mwh": 200,
+                                                   "mode": "forecast",
+                                                   "forecast_train_samples": 20000})
+    assert r3.status_code == 200, r3.text
+    s3 = r3.json()["summary"]
+    assert s3["mode"] == "forecast" and s3["sla_violations_reported"] == 0
+    assert s3["firm_mwh"] > 0
+
     pdf = client.get(f"/api/runs/{r.json()['id']}/report.pdf")
     assert pdf.status_code == 200
     assert pdf.content[:4] == b"%PDF"
