@@ -22,12 +22,38 @@ from curtail.params import ModelParams
 async def lifespan(_: FastAPI):
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     init_db()
+    if settings.demo_mode:
+        _ensure_demo_site()
     yield
 
 
 app = FastAPI(title="Curtail Replay API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins.split(","),
+                   allow_origin_regex=settings.cors_origin_regex,
                    allow_methods=["*"], allow_headers=["*"])
+
+DEMO_SITE = "sample"
+
+
+def _ensure_demo_site() -> None:
+    """Create and replay the sample site once, so a fresh demo is ready."""
+    from curtail.samples import load_sample_into
+
+    with SessionLocal() as db:
+        if db.get(Site, DEMO_SITE) is not None:
+            return
+        db.add(Site(id=DEMO_SITE, name="Sample site (synthetic)",
+                    timezone="America/New_York", iso="PJM"))
+        db.commit()
+        load_sample_into(db, DEMO_SITE)
+        execute_run(db, DEMO_SITE, ModelParams())
+
+
+def writable():
+    """Dependency for endpoints that change site data; off in the public demo."""
+    if settings.demo_mode:
+        raise HTTPException(403, "This is a read-only demo. Run Curtail Replay "
+                                 "locally to upload your own data.")
 
 
 def get_db():
@@ -65,7 +91,7 @@ def _bad(e: Exception):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "demo": settings.demo_mode}
 
 
 @app.get("/api/params/defaults")
@@ -79,7 +105,7 @@ def list_sites(db: Session = Depends(get_db)):
              "price_node": s.price_node} for s in db.scalars(select(Site))]
 
 
-@app.post("/api/sites")
+@app.post("/api/sites", dependencies=[Depends(writable)])
 def create_site(body: SiteIn, db: Session = Depends(get_db)):
     site = db.get(Site, body.id) or Site(id=body.id)
     for k, v in body.model_dump().items():
@@ -96,7 +122,7 @@ def site_status(site_id: str, db: Session = Depends(get_db)):
     return service.site_status(db, site_id)
 
 
-@app.post("/api/sites/{site_id}/uploads")
+@app.post("/api/sites/{site_id}/uploads", dependencies=[Depends(writable)])
 async def upload(site_id: str, kind: str = Form(...), file: UploadFile = File(...),
                  db: Session = Depends(get_db)):
     try:
@@ -107,7 +133,7 @@ async def upload(site_id: str, kind: str = Form(...), file: UploadFile = File(..
         _bad(e)
 
 
-@app.post("/api/datasets/{dataset_id}/apply")
+@app.post("/api/datasets/{dataset_id}/apply", dependencies=[Depends(writable)])
 def apply_mapping(dataset_id: str, body: MappingIn, db: Session = Depends(get_db)):
     ds = db.get(Dataset, dataset_id)
     if ds is None:
@@ -120,7 +146,7 @@ def apply_mapping(dataset_id: str, body: MappingIn, db: Session = Depends(get_db
         _bad(e)
 
 
-@app.post("/api/sites/{site_id}/load-sample")
+@app.post("/api/sites/{site_id}/load-sample", dependencies=[Depends(writable)])
 def load_sample(site_id: str, db: Session = Depends(get_db)):
     """Generate the synthetic sample site and load it through the normal
     upload, mapping and validation path."""
@@ -132,7 +158,7 @@ def load_sample(site_id: str, db: Session = Depends(get_db)):
         _bad(e)
 
 
-@app.post("/api/sites/{site_id}/grid/fetch")
+@app.post("/api/sites/{site_id}/grid/fetch", dependencies=[Depends(writable)])
 def fetch_grid(site_id: str, body: GridFetchIn, db: Session = Depends(get_db)):
     from curtail.grid.service import fetch_into_site
 

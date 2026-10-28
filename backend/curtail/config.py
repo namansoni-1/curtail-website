@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./data/curtail.db"
     data_dir: Path = Path("./data")
     cors_origins: str = "http://localhost:3000"
+    # Optional regex for extra origins, e.g. Vercel preview deployments.
+    cors_origin_regex: str | None = None
+
+    # Public read-only demo: preloads the synthetic sample site and rejects
+    # site creation, uploads and grid fetches. Replay runs stay allowed.
+    demo_mode: bool = False
 
     # Grid data. Keys are optional; without them fetchers fall back to cache.
     pjm_api_key: str | None = None

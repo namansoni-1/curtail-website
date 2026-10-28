@@ -13,4 +13,5 @@ RUN uv sync --frozen --no-dev
 
 ENV CURTAIL_DATA_DIR=/data
 EXPOSE 8000
-CMD ["uv", "run", "--no-dev", "uvicorn", "curtail.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Hosts such as Render set PORT; docker-compose uses the default.
+CMD ["sh", "-c", "exec uv run --no-dev uvicorn curtail.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

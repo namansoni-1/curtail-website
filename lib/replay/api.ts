@@ -21,6 +21,15 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Shown when the API can't be reached at all (not for API-level errors). */
+export function unreachable(e: unknown) {
+  const msg = (e as Error).message;
+  if (msg !== "Failed to fetch" && msg !== "Load failed") return msg;
+  return process.env.NEXT_PUBLIC_CURTAIL_API
+    ? "The Replay demo server isn't responding. Please try again in a minute."
+    : `Can't reach the Replay API at ${API_BASE}. Is the backend running?`;
+}
+
 export type Site = {
   id: string;
   name: string;
@@ -201,6 +210,7 @@ export type RunResult = {
 };
 
 export const api = {
+  health: () => call<{ ok: boolean; demo: boolean }>("/api/health"),
   sites: () => call<Site[]>("/api/sites"),
   createSite: (s: Omit<Site, "price_node"> & { price_node?: string | null }) =>
     call<{ id: string }>("/api/sites", { method: "POST", body: JSON.stringify(s) }),

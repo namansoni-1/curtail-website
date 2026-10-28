@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { api, type Site } from "@/lib/replay/api";
+import { api, unreachable, type Site } from "@/lib/replay/api";
 import { DataTab } from "./DataTab";
 import { ResultsTab } from "./ResultsTab";
 import { ErrorNote } from "./ui";
@@ -20,7 +20,7 @@ export function SiteWorkspace({ siteId }: { siteId: string }) {
         if (!s) setError(`No site "${siteId}"`);
         setSite(s ?? null);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(unreachable(e)));
   }, [siteId]);
 
   return (

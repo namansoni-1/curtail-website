@@ -59,6 +59,8 @@ All settings are environment variables, read by `backend/curtail/config.py`:
 | `CURTAIL_DATABASE_URL` | `sqlite:///./data/curtail.db` | Postgres/TimescaleDB in compose: `postgresql+psycopg://curtail:curtail@db:5432/curtail`. Plain Postgres also works, without hypertables. |
 | `CURTAIL_DATA_DIR` | `./data` | Uploads, fetched-price cache, downloaded traces |
 | `CURTAIL_CORS_ORIGINS` | `http://localhost:3000` | Web origin(s), comma-separated |
+| `CURTAIL_CORS_ORIGIN_REGEX` | none | Extra allowed origins as a regex, e.g. Vercel previews |
+| `CURTAIL_DEMO_MODE` | `false` | Public read-only demo: preloads the sample site and refuses site creation, uploads and grid fetches. Replays are still allowed. |
 | `CURTAIL_PJM_API_KEY` | none | PJM Data Miner 2 subscription key, needed for PJM prices. Register for free at https://apiportal.pjm.com/ |
 | `NEXT_PUBLIC_CURTAIL_API` | `http://localhost:8000` | API address as seen from the browser (web build) |
 
@@ -76,6 +78,22 @@ All settings are environment variables, read by `backend/curtail/config.py`:
   archive (report 13061). No key is needed.
 
 Fetched data is cached under `CURTAIL_DATA_DIR/cache`.
+
+## Public demo (curtailenergy.com/replay)
+
+The website's `/replay` page talks to a hosted copy of the API in demo mode.
+
+1. On [Render](https://render.com), choose **New → Blueprint** and pick this
+   repository. `render.yaml` defines a free Docker web service,
+   `curtail-replay-api`, built from `backend/`. It builds the sample site
+   on first boot.
+2. In Vercel, set `NEXT_PUBLIC_CURTAIL_API` to the service's URL (e.g.
+   `https://curtail-replay-api.onrender.com`) for Production and Preview,
+   then redeploy.
+
+The free plan sleeps after 15 idle minutes, so the first visit can take
+about a minute; the page says it's connecting meanwhile. Its disk is wiped
+on restart, so any runs visitors make are temporary.
 
 ## Data you can upload
 

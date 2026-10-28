@@ -1,0 +1,28 @@
+# Render blueprint for the public Replay demo API (read-only, sample site).
+# Create it from the Render dashboard: New > Blueprint > this repository.
+# Then set NEXT_PUBLIC_CURTAIL_API in Vercel to the service's URL.
+services:
+  - type: web
+    name: curtail-replay-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    buildFilter:
+      paths:
+        - backend/**
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: CURTAIL_DEMO_MODE
+        value: "true"
+      - key: CURTAIL_CORS_ORIGINS
+        value: https://curtailenergy.com,https://www.curtailenergy.com,http://localhost:3000
+      - key: CURTAIL_CORS_ORIGIN_REGEX
+        value: https://curtail-website-[a-z0-9-]+\.vercel\.app
+      # SQLite on the container's own disk. The free plan's disk is wiped on
+      # each deploy or restart, and demo mode rebuilds the sample site on boot.
+      - key: CURTAIL_DATA_DIR
+        value: /tmp/curtail
+      - key: CURTAIL_DATABASE_URL
+        value: sqlite:////tmp/curtail/curtail.db

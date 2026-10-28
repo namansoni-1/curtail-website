@@ -8,6 +8,10 @@ import { Badge, Btn, Card, ErrorNote, Table, fmt } from "./ui";
 export function DataTab({ site }: { site: Site }) {
   const [status, setStatus] = useState<SiteStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [demo, setDemo] = useState(false);
+  useEffect(() => {
+    api.health().then((h) => setDemo(h.demo)).catch(() => {});
+  }, []);
 
   const refresh = useCallback(() => {
     api.status(site.id).then(setStatus).catch((e) => setError(e.message));
@@ -18,8 +22,12 @@ export function DataTab({ site }: { site: Site }) {
     <div className="space-y-5">
       <ErrorNote error={error} />
       {status && <StatusCard status={status} />}
-      <UploadWizard siteId={site.id} timezone={site.timezone} onLoaded={refresh} />
-      <GridFetch site={site} status={status} onLoaded={refresh} />
+      {!demo && (
+        <>
+          <UploadWizard siteId={site.id} timezone={site.timezone} onLoaded={refresh} />
+          <GridFetch site={site} status={status} onLoaded={refresh} />
+        </>
+      )}
     </div>
   );
 }

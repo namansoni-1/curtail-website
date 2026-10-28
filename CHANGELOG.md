@@ -2,6 +2,20 @@
 
 ## Unreleased: Phase 1, Curtail Replay
 
+### Changed
+- Landing page, "The problem": the bell-curve animation is replaced by a grid
+  of every hour of 2022 with ERCOT North Hub's real scarcity hours lit up
+  (176 hours above $200/MWh, 40 above $1,000/MWh), plus three supporting
+  figures.
+- The site navigation links to Replay, and Replay pages have a header that
+  leads back to the site.
+
+### Added (public demo)
+- `CURTAIL_DEMO_MODE`: a read-only API for the public site that preloads and
+  replays the sample site.
+- `render.yaml` for hosting that API, and `CURTAIL_CORS_ORIGIN_REGEX` for
+  Vercel preview deployments.
+
 ### Added
 - **Counterfactual engine** (`backend/curtail/engine/`):
   - Event windows come from DR and emergency flags, or from price ≥ a
