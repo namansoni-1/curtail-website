@@ -1,8 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-
-const EASE = [0.16, 1, 0.3, 1] as const;
+import { duration, ease, stagger, viewport } from "@/components/motion";
 
 // Fixed, deterministic offsets — not Math.random() — so server and client
 // render the same scattered starting positions.
@@ -37,7 +36,7 @@ export function CoordinationVisual() {
       aria-hidden="true"
       initial="scattered"
       whileInView="aligned"
-      viewport={{ once: true, margin: "-100px" }}
+      viewport={viewport.early}
     >
       {DOTS.map((d, i) => {
         const x = X0 + ((X1 - X0) / (COUNT - 1)) * i;
@@ -50,7 +49,13 @@ export function CoordinationVisual() {
               scattered: { cx: x + d.dx, cy: Y + d.dy, opacity: 0.4 },
               aligned: { cx: x, cy: Y, opacity: 1 },
             }}
-            transition={{ duration: 0.9, delay: 0.15 + i * 0.035, ease: EASE }}
+            transition={{
+              duration: duration.slow,
+              // Left-to-right sweep: the fabric resolves as one gesture rather
+              // than every cell snapping at once.
+              delay: 0.15 + i * stagger.tight,
+              ease: ease.out,
+            }}
             fill={claimed ? "var(--signal)" : "rgba(250,249,246,0.3)"}
           />
         );

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ScrollProvider } from "@/components/motion";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,7 +30,22 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-paper text-ink">
-        {children}
+        {/*
+          Reveals are server-rendered in their hidden state (opacity 0) so
+          there is no flash before hydration. Without JS nothing would ever
+          reveal them, so make the resolved state the no-JS default. Transforms
+          are deliberately left alone — a few px of offset reads fine, whereas
+          clearing every transform would displace positioned elements.
+        */}
+        <noscript>
+          <style>{`
+            header *, main *, footer * {
+              opacity: 1 !important;
+              filter: none !important;
+            }
+          `}</style>
+        </noscript>
+        <ScrollProvider>{children}</ScrollProvider>
       </body>
     </html>
   );

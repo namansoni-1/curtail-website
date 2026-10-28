@@ -38,8 +38,42 @@
   --font-mono: var(--font-geist-mono);
 }
 
-html {
-  scroll-behavior: smooth;
+/* Motion tokens, mirrored from components/motion/tokens.ts for CSS-driven
+   transitions (hover states, focus rings). Keep the two in sync. */
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-tactile: cubic-bezier(0.33, 1, 0.68, 1);
+
+  --dur-micro: 160ms;
+  --dur-hover: 220ms;
+  --dur-fast: 360ms;
+}
+
+/* Lenis owns scroll interpolation. Native `scroll-behavior: smooth` would
+   fight it on anchor jumps, so it is deliberately absent here — Lenis's
+   `anchors` option eases in-page links instead. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Iframes swallow wheel events and desync the interpolation. */
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 body {

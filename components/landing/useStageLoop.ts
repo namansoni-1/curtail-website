@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { useSettledReducedMotion } from "@/components/motion";
 
 /**
  * Steps through a fixed list of stage durations and loops. Pass a module
@@ -9,7 +9,7 @@ import { useReducedMotion } from "framer-motion";
  * Reduced motion holds the last stage, which is always the resolved one.
  */
 export function useStageLoop(durations: readonly number[], active: boolean) {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useSettledReducedMotion();
   const [stage, setStage] = useState(0);
 
   useEffect(() => {

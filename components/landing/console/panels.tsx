@@ -114,7 +114,7 @@ export function MetricTiles({ world }: { world: World }) {
       {tiles.map((tile) => (
         <div
           key={tile.label}
-          className="group px-3.5 py-3.5 transition-colors duration-300 hover:bg-gray-50/70"
+          className="group px-3.5 py-3.5 transition-colors duration-[var(--dur-hover)] ease-[var(--ease-tactile)] hover:bg-gray-50/70"
         >
           <p className="font-mono text-[9px] tracking-[0.16em] text-gray-400 uppercase">
             {tile.label}
@@ -293,7 +293,7 @@ function TenantRow({
 
   return (
     <div
-      className="relative px-3.5 py-2.5 transition-colors duration-300 hover:bg-gray-50/80"
+      className="relative px-3.5 py-2.5 transition-colors duration-[var(--dur-hover)] ease-[var(--ease-tactile)] hover:bg-gray-50/80"
       style={{ opacity: dimmed ? 0.45 : inactive ? 0.55 : 1, transition: "opacity 300ms" }}
       onMouseEnter={() => onHover(tenant.id)}
       onMouseLeave={() => onHover(null)}
@@ -426,7 +426,7 @@ export function HistoryStrip({ world }: { world: World }) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
                 transition={{ duration: 0.45, ease: EASE }}
-                className={`rounded-lg border p-3 transition-colors duration-300 hover:border-ink/20 ${
+                className={`rounded-lg border p-3 transition-colors duration-[var(--dur-hover)] ease-[var(--ease-tactile)] hover:border-ink/20 ${
                   live ? "border-signal/30 bg-signal/[0.05]" : "border-ink/[0.08]"
                 }`}
               >

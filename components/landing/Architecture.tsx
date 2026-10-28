@@ -3,9 +3,9 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import { ARCHITECTURE_STAGES, ArchitectureField } from "./ArchitectureField";
-import { Reveal } from "./Reveal";
 import { Section } from "./Section";
 import { SectionLabel } from "./SectionLabel";
+import { Stagger, StaggerItem, duration, ease, spring } from "@/components/motion";
 
 export function Architecture() {
   const [stage, setStage] = useState(-1);
@@ -15,22 +15,24 @@ export function Architecture() {
     target: scrubRef,
     offset: ["start start", "end end"],
   });
-  const scrollProgress = useSpring(scrollYProgress, {
-    stiffness: 220,
-    damping: 36,
-    mass: 0.6,
-  });
+  const scrollProgress = useSpring(scrollYProgress, spring.scrub);
 
   return (
     <Section id="architecture" tone="subtle" className="!py-0">
-      <div className="px-6 pt-28 pb-16 text-center md:pt-40">
-        <Reveal>
+      <Stagger className="px-6 pt-28 pb-16 text-center md:pt-40">
+        <StaggerItem distance="xs">
           <SectionLabel index="02">How it works</SectionLabel>
-          <h2 className="mx-auto max-w-2xl text-4xl font-semibold tracking-tight text-ink md:text-5xl md:leading-[1.15]">
-            From grid signal to committed capacity.
-          </h2>
-        </Reveal>
-      </div>
+        </StaggerItem>
+        <StaggerItem
+          as="h2"
+          kind="blur"
+          distance="md"
+          duration={duration.slow}
+          className="mx-auto max-w-2xl text-4xl font-semibold tracking-tight text-ink md:text-5xl md:leading-[1.15]"
+        >
+          From grid signal to committed capacity.
+        </StaggerItem>
+      </Stagger>
 
       <div ref={scrubRef} style={{ height: "260vh" }} className="relative">
         <div className="sticky top-0 flex h-screen flex-col items-center justify-center px-6">
@@ -39,10 +41,10 @@ export function Architecture() {
               {stage >= 0 && (
                 <motion.p
                   key={stage}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.4 }}
+                  initial={{ opacity: 0, y: 6, filter: "blur(3px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -6, filter: "blur(3px)" }}
+                  transition={{ duration: duration.fast, ease: ease.out }}
                   className="font-mono text-xs tracking-[0.14em] text-signal uppercase"
                 >
                   {ARCHITECTURE_STAGES[stage]?.text}

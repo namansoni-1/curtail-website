@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useMotionValue, useReducedMotion } from "framer-motion";
+import { useMotionValue } from "framer-motion";
+import { useSettledReducedMotion } from "@/components/motion";
 import {
   PHASE_ENTRY,
   SIM_START_SECONDS,
@@ -17,7 +18,7 @@ const LAST = TIMELINE.length - 1;
  * value, and the clock reads a ref.
  */
 export function useConsoleEngine(active: boolean) {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useSettledReducedMotion();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 

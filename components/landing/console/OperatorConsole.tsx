@@ -34,7 +34,7 @@ export function OperatorConsole() {
       <div className="grid gap-3 p-3 lg:grid-cols-[3fr_2fr]">
         <div className="flex flex-col gap-3">
           <RequestPanel world={world} hovered={hovered} setHovered={setHovered} />
-          <div className="flex-1 rounded-lg border border-ink/[0.08] transition-colors duration-300 hover:border-ink/[0.16]">
+          <div className="flex-1 rounded-lg border border-ink/[0.08] transition-colors duration-[var(--dur-hover)] ease-[var(--ease-tactile)] hover:border-ink/[0.16]">
             <LoadChart gridLoad={world.gridLoad} shed={world.shed} live={inView} />
           </div>
         </div>
@@ -135,7 +135,12 @@ function PlaybackRail({ engine }: { engine: ConsoleEngine }) {
           )}
         </button>
 
-        <div className="scrollbar-none -mx-1 flex flex-1 gap-1 overflow-x-auto px-1">
+        {/* Keeps its own native scrolling — Lenis must not capture wheel
+            events that land inside this rail. */}
+        <div
+          data-lenis-prevent
+          className="scrollbar-none -mx-1 flex flex-1 gap-1 overflow-x-auto px-1"
+        >
           {PHASES.map((p, i) => {
             const active = i === phase;
             const done = i < phase;

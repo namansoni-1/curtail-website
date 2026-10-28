@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { useSettledReducedMotion } from "@/components/motion";
 import { useInView } from "../useInView";
 
 // One settled event, split. Money moves left to right along real paths, and
@@ -46,7 +46,9 @@ const TICK_MS = 90;
 
 export function RevenueFlow() {
   const { ref, inView } = useInView<HTMLDivElement>("-40px");
-  const reducedMotion = useReducedMotion();
+  // Settled: `eased` below feeds rendered SVG geometry and label text, so a
+  // render-time preference read would disagree with the server's HTML.
+  const reducedMotion = useSettledReducedMotion();
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
