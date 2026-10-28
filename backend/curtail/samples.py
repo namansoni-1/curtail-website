@@ -125,7 +125,14 @@ def make_sample(out_dir: Path, days: int = 14, seed: int = 3) -> dict[str, Path]
         "job_power": out_dir / "job_power.parquet",
         "tenants": out_dir / "tenants.csv",
         "grid_signals": out_dir / "grid.csv",
+        "grid_events": out_dir / "events.csv",
     }
+    pd.DataFrame([
+        {"Effective Start Time": "2024-07-19 13:00", "Effective End Time": "2024-07-19 15:00",
+         "Message Type": "Pre-Emergency Load Management Reduction Action"},
+        {"Effective Start Time": "2024-07-15 09:00", "Effective End Time": "2024-07-15 21:00",
+         "Message Type": "Hot Weather Alert"},
+    ]).to_csv(paths["grid_events"], index=False)
     facility.to_csv(paths["facility_power"], index=False)
     pd.DataFrame(jobs).to_csv(paths["jobs"], index=False)
     jp.assign(timestamp=jp["timestamp"].dt.tz_convert("UTC")).to_parquet(paths["job_power"])

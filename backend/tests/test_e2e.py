@@ -43,11 +43,13 @@ def test_upload_to_report(client, tmp_path):
     assert rep["tenants"] == 3
     prev, rep = upload(client, "demo", "grid_signals", paths["grid_signals"])
     assert prev["suggested_mapping"]["price"] == "lmp"
+    _, rep = upload(client, "demo", "grid_events", paths["grid_events"])
+    assert rep["events"] == {"dr": 1, "emergency": 0, "ignored": 1}
 
     r = client.post("/api/sites/demo/runs", json={"price_threshold_per_mwh": 200})
     assert r.status_code == 200, r.text
     s = r.json()["summary"]
-    assert s["events"] >= 5
+    assert s["events"] >= 6
     assert s["firm_mwh"] > 0
     assert s["sla_violations_reported"] == 0
     assert s["decisions_dropped_by_verifier"] == 0

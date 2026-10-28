@@ -24,6 +24,7 @@ from curtail.db import (
     TenantPolicyRow,
 )
 from curtail.engine.replay import ReplayInputs
+from curtail.grid.service import merge_events, read_grid, write_grid
 from curtail.engine.types import Blackout, Job, JobType, TenantPolicy
 from curtail.ingest.parse import apply_mapping, node_to_job_power, read_table, resample_series
 from curtail.ingest.schemas import DATASETS, suggest_mapping
@@ -146,11 +147,24 @@ def apply(db: Session, ds: Dataset, mapping: dict[str, str], options: dict) -> d
                 agg[f] = "max"
         res = resample_series(canon, interval, agg)
         report.update(series_report(canon, res, interval, list(agg)))
-        frame = res.rename_axis("ts").reset_index()
-        for f in ("dr_flag", "emergency_flag"):
-            frame[f] = frame[f].fillna(False).astype(bool) if f in frame else False
-        frame["source"] = options.get("source", "upload")
-        n = _write(db, GridSignal, site.id, frame)
+        # Merge with what is already there (fetched prices, uploaded events):
+        # uploaded columns win, others are kept.
+        grid = read_grid(db, site.id)
+        grid = grid.reindex(grid.index.union(res.index))
+        for c in agg:
+            grid.loc[res.index, c] = res[c].to_numpy()
+        grid.loc[res.index, "source"] = options.get("source", "upload")
+        n = write_grid(db, site.id, grid)
+    elif ds.kind == "grid_events":
+        ev = canon.rename(columns={"kind": "label"})
+        if "description" in ev:
+            ev["label"] = ev.get("label", "").fillna("").astype(str) + " " + ev["description"].fillna("")
+        report["date_range"] = {"start": ev["start"].min().isoformat(),
+                                "end": ev["end"].max().isoformat()}
+        report["events"] = merge_events(db, site.id, ev, interval)
+        report["note"] = ("Postings classified as DR (load management, pre-emergency) or "
+                          "emergency (max gen, voltage reduction, load shed, PAI); alerts ignored.")
+        n = int(report["events"]["dr"] + report["events"]["emergency"])
     elif ds.kind == "jobs":
         report.update(jobs_report(canon))
         frame = canon.drop_duplicates("job_id", keep="last").copy()
