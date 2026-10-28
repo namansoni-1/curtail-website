@@ -120,6 +120,18 @@ def apply_mapping(dataset_id: str, body: MappingIn, db: Session = Depends(get_db
         _bad(e)
 
 
+@app.post("/api/sites/{site_id}/load-sample")
+def load_sample(site_id: str, db: Session = Depends(get_db)):
+    """Generate the synthetic sample site and load it through the normal
+    upload, mapping and validation path."""
+    from curtail.samples import load_sample_into
+
+    try:
+        return load_sample_into(db, site_id)
+    except ValueError as e:
+        _bad(e)
+
+
 @app.post("/api/sites/{site_id}/grid/fetch")
 def fetch_grid(site_id: str, body: GridFetchIn, db: Session = Depends(get_db)):
     from curtail.grid.service import fetch_into_site

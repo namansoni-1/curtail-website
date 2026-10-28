@@ -146,3 +146,23 @@ def _fmt_limit(td: pd.Timedelta) -> str:
     d, rem = divmod(mins, 1440)
     h, m = divmod(rem, 60)
     return f"{d}-{h:02d}:{m:02d}:00" if d else f"{h:02d}:{m:02d}:00"
+
+
+SAMPLE_ORDER = ["jobs", "job_power", "facility_power", "tenants", "grid_signals", "grid_events"]
+
+
+def load_sample_into(db, site_id: str) -> dict:
+    """Write the sample files and push each through upload -> mapping -> validation."""
+    from curtail.config import settings
+    from curtail.ingest import service
+
+    paths = make_sample(settings.data_dir / "samples" / site_id)
+    reports = {}
+    for kind in SAMPLE_ORDER:
+        p = paths[kind]
+        ds = service.save_upload(db, site_id, kind, p.name, p.read_bytes())
+        mapping = service.preview(ds)["suggested_mapping"]
+        if kind == "jobs":
+            mapping["deadline"] = "Deadline"
+        reports[kind] = service.apply(db, ds, mapping, {})
+    return {"ok": True, "loaded": {k: r.get("rows_loaded") for k, r in reports.items()}}
