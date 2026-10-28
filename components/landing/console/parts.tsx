@@ -2,8 +2,13 @@
 
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
+import { ease } from "@/components/motion";
 
-export const EASE = [0.16, 1, 0.3, 1] as const;
+/**
+ * Re-exported from the motion tokens so the console shares the site's house
+ * curve rather than keeping its own copy of the same numbers.
+ */
+export const EASE = ease.out;
 
 /**
  * A number that springs to its new value instead of snapping. Updates run
@@ -80,7 +85,7 @@ export function Panel({
 }) {
   return (
     <section
-      className={`group/panel flex flex-col rounded-lg border border-ink/[0.08] bg-paper transition-colors duration-300 hover:border-ink/[0.16] ${className}`}
+      className={`group/panel flex flex-col rounded-lg border border-ink/[0.08] bg-paper transition-colors duration-[var(--dur-hover)] ease-[var(--ease-tactile)] hover:border-ink/[0.16] ${className}`}
     >
       <header className="flex h-9 shrink-0 items-center justify-between gap-3 border-b border-ink/[0.06] px-3.5">
         <h4 className="font-mono text-[10px] tracking-[0.16em] text-gray-400 uppercase">

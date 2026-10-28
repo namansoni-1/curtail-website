@@ -121,7 +121,7 @@ export function ProtectedSLA() {
           return (
             <div
               key={lane.id}
-              className="group flex items-center gap-3 py-2.5 transition-colors duration-300 hover:bg-gray-50/70"
+              className="group flex items-center gap-3 py-2.5 transition-colors duration-[var(--dur-hover)] ease-[var(--ease-tactile)] hover:bg-gray-50/70"
               style={{ opacity: dim ? 0.4 : 1, transition: "opacity 250ms" }}
               onMouseEnter={() => setHovered(lane.id)}
               onMouseLeave={() => setHovered(null)}

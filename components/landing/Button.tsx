@@ -26,12 +26,16 @@ export function Button({
   return (
     <Link
       href={href}
-      className={`group inline-flex h-11 -translate-y-0 items-center justify-center gap-1.5 rounded-full px-6 text-sm font-medium transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] ${variants[variant]} ${className}`}
+      // Named properties rather than `transition-all`: the browser only has to
+      // watch what actually changes, and transform/opacity/box-shadow all
+      // composite without touching layout. 220ms sits in the tactile band —
+      // 300ms reads as slightly slow for a pointer response.
+      className={`group inline-flex h-11 -translate-y-0 items-center justify-center gap-1.5 rounded-full px-6 text-sm font-medium transition-[transform,box-shadow,background-color,border-color] duration-[var(--dur-hover)] ease-[var(--ease-tactile)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] active:duration-[var(--dur-micro)] ${variants[variant]} ${className}`}
     >
       {children}
       <span
         aria-hidden="true"
-        className="-ml-0.5 opacity-60 transition-all duration-300 ease-out group-hover:translate-x-0.5 group-hover:opacity-100"
+        className="-ml-0.5 opacity-60 transition-[transform,opacity] duration-[var(--dur-hover)] ease-[var(--ease-tactile)] group-hover:translate-x-0.5 group-hover:opacity-100"
       >
         →
       </span>

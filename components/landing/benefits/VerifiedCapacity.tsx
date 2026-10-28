@@ -4,8 +4,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useInView } from "../useInView";
 import { useStageLoop } from "../useStageLoop";
 import { Ticker } from "../console/parts";
+import { ease } from "@/components/motion";
 
-const EASE = [0.16, 1, 0.3, 1] as const;
+const EASE = ease.out;
 
 const CANDIDATES = [
   { id: "ATL-01", name: "Northwind AI", mw: 8.2, clears: true, reason: "Cooling headroom" },

@@ -1,13 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import {
-  useScroll,
-  useSpring,
-  useTransform,
-  useReducedMotion,
-  motion,
-} from "framer-motion";
+import { useScroll, useSpring, useTransform, motion } from "framer-motion";
+import { spring, useSettledReducedMotion } from "@/components/motion";
 
 // Shared geometry for the demand curve. Both the "ghost" (uncurtailed) and
 // "actual" (managed) lines use the same horizontal control points — only the
@@ -32,26 +27,31 @@ const BAR_MAX_FLEX_H = 84;
 
 export function GridCapacityField() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useSettledReducedMotion();
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start 0.82", "end 0.4"],
+    // The whole story has to land while the chart is actually on screen. The
+    // previous window ran until the chart's bottom reached 40% of the
+    // viewport, which put the final phase past the point where the chart had
+    // scrolled off the top — the labels explaining the two curves were only
+    // legible once you could no longer see them. This finishes with the chart
+    // sitting fully in frame.
+    offset: ["start 0.92", "end 0.72"],
   });
 
-  const smoothed = useSpring(scrollYProgress, {
-    stiffness: 260,
-    damping: 42,
-    mass: 0.6,
-  });
+  const smoothed = useSpring(scrollYProgress, spring.scrub);
 
   // With reduced motion, skip scroll-scrubbing entirely and render the
   // resolved end-state as a static diagram.
   const progress = useTransform(smoothed, (v) => (reducedMotion ? 1 : v));
 
-  const reveal = useTransform(progress, [0, 0.22], [0, 1], { clamp: true });
-  const bump = useTransform(progress, [0.28, 0.68], [0, 1], { clamp: true });
-  const settle = useTransform(progress, [0.78, 1], [0, 1], { clamp: true });
+  // Phases overlap deliberately: the labels begin resolving while the peak is
+  // still rising, so the section reads as one continuous explanation rather
+  // than three discrete steps waiting on each other.
+  const reveal = useTransform(progress, [0, 0.28], [0, 1], { clamp: true });
+  const bump = useTransform(progress, [0.26, 0.72], [0, 1], { clamp: true });
+  const settle = useTransform(progress, [0.58, 0.88], [0, 1], { clamp: true });
 
   const actualPeak = useTransform(bump, (b) => BASELINE + (CEILING - BASELINE) * b);
   const ghostPeak = useTransform(bump, (b) => BASELINE + (GHOST_PEAK - BASELINE) * b);
