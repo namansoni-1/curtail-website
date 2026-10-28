@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -101,6 +102,7 @@ def run_replay(inp: ReplayInputs, params: ModelParams, forecaster: Any = None) -
         inp.data_flags.append("it_kw_missing_derived_from_pue")
 
     outcomes: list[EventOutcome] = []
+    delay_so_far: dict[str, float] = {}
     for w in windows:
         n = int((w.end - w.start) / step)
         idx = pd.date_range(w.start, periods=n, freq=step)
@@ -113,7 +115,15 @@ def run_replay(inp: ReplayInputs, params: ModelParams, forecaster: Any = None) -
 
         ws64, we64 = w.start.to_datetime64(), w.end.to_datetime64()
         mask = (starts < we64) & (ends > ws64)
-        jobs = [inp.jobs[i] for i in np.nonzero(mask)[0]]
+        # Delay accumulates across events (and across chunks of one long
+        # event): a job already delayed earlier finishes later, so it has that
+        # much less slack left. Both the optimizer and the verifier see the
+        # shifted end time.
+        jobs = [
+            replace(j, end=j.end + timedelta(minutes=delay_so_far[j.job_id]))
+            if delay_so_far.get(j.job_id) else j
+            for j in (inp.jobs[i] for i in np.nonzero(mask)[0])
+        ]
         actual = pidx.window(w.start, n, step)
 
         end_est = None
@@ -121,7 +131,8 @@ def run_replay(inp: ReplayInputs, params: ModelParams, forecaster: Any = None) -
         if params.mode == "forecast" and forecaster is not None:
             hist = pidx.history(w.start, forecaster.history_intervals, step)
             decide_power = forecaster.predict(jobs, hist, spec.ws, n)
-            end_est = {j.job_id: (j.timelimit_end or j.end) for j in jobs}
+            end_est = {j.job_id: (j.timelimit_end + timedelta(minutes=delay_so_far.get(j.job_id, 0.0))
+                                  if j.timelimit_end else j.end) for j in jobs}
 
         result = solve_event(spec, jobs, decide_power, inp.policies, params, inp.tz,
                              excluded, end_est)
@@ -146,6 +157,10 @@ def run_replay(inp: ReplayInputs, params: ModelParams, forecaster: Any = None) -
             again = verify_event(result.decisions, {j.job_id: j for j in jobs}, actual,
                                  inp.policies, params, spec.ws, spec.we, inp.tz, n)
             assert not again, again
+
+        for d in result.decisions:
+            if d.action != ActionKind.NONE and d.delay_minutes > 0:
+                delay_so_far[d.job_id] = delay_so_far.get(d.job_id, 0.0) + d.delay_minutes
 
         outcomes.append(EventOutcome(
             result, violations,

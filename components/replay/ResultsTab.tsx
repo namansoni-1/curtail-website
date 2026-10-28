@@ -110,7 +110,7 @@ export function ResultsTab({ site }: { site: Site }) {
             <Stat
               label="Jobs affected"
               value={s.jobs_affected.toLocaleString()}
-              sub={`${s.actions.cap ?? 0} capped · ${s.actions.pause ?? 0} paused · ${s.actions.defer ?? 0} deferred`}
+              sub={`actions: ${s.actions.cap ?? 0} caps · ${s.actions.pause ?? 0} pauses · ${s.actions.defer ?? 0} deferrals`}
             />
             <Stat
               label="Operator net"
@@ -157,14 +157,14 @@ export function ResultsTab({ site }: { site: Site }) {
           <div className="grid gap-5 lg:grid-cols-2">
             <Card title="By tenant">
               <Table
-                head={["Tenant", "Events", "Jobs", "Modeled MWh", "Compensation", "Usually excluded because"]}
+                head={["Tenant", "Events", "Job actions", "Modeled energy", "Compensation", "Usually excluded because"]}
                 rows={result.tenants.map((t) => {
                   const top = Object.entries(t.exclusions).sort((a, b) => b[1] - a[1])[0];
                   return [
                     <span key="t" className="font-medium">{t.tenant_id}</span>,
                     t.events_participated,
                     t.jobs_affected,
-                    t.modeled_mwh.toFixed(2),
+                    fmt.mwh(t.modeled_mwh),
                     fmt.usd(t.compensation),
                     top ? `${fmt.label(top[0])} (${top[1]})` : "",
                   ];
@@ -174,13 +174,13 @@ export function ResultsTab({ site }: { site: Site }) {
             <Card title="Events" aside={`${result.events.length} windows`}>
               <div className="max-h-96 overflow-auto">
                 <Table
-                  head={["Start", "Type", "Avg $/MWh", "Firm", "MWh", "Net", ""]}
+                  head={["Start", "Type", "Avg $/MWh", "Firm avg", "Energy", "Net", ""]}
                   rows={result.events.map((e, i) => [
                     fmt.dt(e.start),
                     <Badge key="k" tone={e.kind === "price" ? "signal" : "warn"}>{e.kind}</Badge>,
                     Math.round(e.avg_price).toLocaleString(),
                     fmt.mw(e.firm_avg_mw),
-                    e.firm_mwh.toFixed(2),
+                    fmt.mwh(e.firm_mwh),
                     fmt.usd(e.operator_net),
                     <button key="b" onClick={() => setEventIdx(i)} className="text-xs text-signal-dim underline-offset-2 hover:underline">
                       details

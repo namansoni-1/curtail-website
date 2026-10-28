@@ -28,7 +28,8 @@ from reportlab.platypus import (
 INK = colors.HexColor("#14161a")
 MUTED = colors.HexColor("#5b6270")
 RULE = colors.HexColor("#d9dce2")
-ACCENT = "#1f6feb"
+ACCENT = "#c8763a"
+NEUTRAL = "#57524a"
 
 FLAG_TEXT = {
     "deadline_missing_assumed_zero_slack": "jobs with no deadline treated as having zero slack",
@@ -47,6 +48,14 @@ FLAG_TEXT = {
 }
 
 
+def _energy(mwh: float) -> str:
+    return f"{mwh * 1000:,.1f} kWh" if abs(mwh) < 1 else f"{mwh:,.2f} MWh"
+
+
+def _power(mw: float) -> str:
+    return f"{mw * 1000:,.1f} kW" if abs(mw) < 1 else f"{mw:,.2f} MW"
+
+
 def _money(x: float) -> str:
     return f"-${abs(x):,.0f}" if x < 0 else f"${x:,.0f}"
 
@@ -55,13 +64,15 @@ def _chart(result: dict) -> io.BytesIO:
     tl = result["timeline"]
     ts = pd.to_datetime(tl["ts"])
     fig, ax = plt.subplots(figsize=(7.2, 2.6), dpi=200)
-    actual = [None if v is None else v / 1000 for v in tl["actual_kw"]]
-    reduced = [None if v is None else v / 1000 for v in tl["reduced_kw"]]
+    peak = max((v for v in tl["actual_kw"] if v is not None), default=0)
+    scale, unit = (1000, "MW") if peak >= 1000 else (1, "kW")
+    actual = [None if v is None else v / scale for v in tl["actual_kw"]]
+    reduced = [None if v is None else v / scale for v in tl["reduced_kw"]]
     for w in tl["windows"]:
         ax.axvspan(pd.Timestamp(w["start"]), pd.Timestamp(w["end"]), color="#f2b134", alpha=0.25, lw=0)
-    ax.plot(ts, actual, color="#9aa1ad", lw=0.8, label="Actual facility load")
+    ax.plot(ts, actual, color=NEUTRAL, lw=0.8, label="Actual facility load")
     ax.plot(ts, reduced, color=ACCENT, lw=0.8, label="With Curtail (firm)")
-    ax.set_ylabel("MW", fontsize=7)
+    ax.set_ylabel(unit, fontsize=7)
     ax.tick_params(labelsize=6)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
     for s in ("top", "right"):
@@ -117,7 +128,7 @@ def build_pdf(result: dict, site_name: str, run_id: str) -> bytes:
         Spacer(1, 10),
         Paragraph(
             f"Over <b>{s['period_months']:.1f} months</b>, this facility could have safely reduced "
-            f"<b>{s['firm_mwh']:,.1f} MWh</b> across <b>{s['events_with_reduction']} of "
+            f"<b>{_energy(s['firm_mwh'])}</b> across <b>{s['events_with_reduction']} of "
             f"{s['events']} events</b>, affecting <b>{s['jobs_affected']} jobs</b> and earning the "
             f"operator <b>{_money(s['operator_net'])}</b> net of tenant compensation and energy "
             f"rebound, with <b>zero SLA or tenant-rule violations</b>.", body),
@@ -128,11 +139,12 @@ def build_pdf(result: dict, site_name: str, run_id: str) -> bytes:
         ["Metric", "Value"],
         [("Events analyzed (grid events + price above "
          f"${p['price_threshold_per_mwh']:,.0f}/MWh)"), f"{s['events']} ({s['event_hours']:.1f} h)"],
-        ["Firm energy reduced during events", f"{s['firm_mwh']:,.2f} MWh"],
-        ["Average firm reduction while events active", f"{s['avg_firm_mw_during_events']:,.3f} MW"],
-        ["Largest single-event average reduction", f"{s['peak_firm_mw']:,.3f} MW"],
-        ["Jobs affected (capped / paused / deferred)",
-         f"{s['jobs_affected']} ({acts.get('cap', 0)} / {acts.get('pause', 0)} / {acts.get('defer', 0)})"],
+        ["Firm energy reduced during events", _energy(s["firm_mwh"])],
+        ["Average firm reduction while events active", _power(s["avg_firm_mw_during_events"])],
+        ["Largest single-event average reduction", _power(s["peak_firm_mw"])],
+        ["Jobs affected", f"{s['jobs_affected']}"],
+        ["Actions taken across events (caps / pauses / deferrals)",
+         f"{acts.get('cap', 0)} / {acts.get('pause', 0)} / {acts.get('defer', 0)}"],
         ["Gross value of reduced energy", _money(s["gross_value"])],
         ["Less: cost of rebound energy after events", _money(-s["rebound_cost"])],
         ["Less: tenant compensation", _money(-s["tenant_compensation"])],
@@ -143,19 +155,20 @@ def build_pdf(result: dict, site_name: str, run_id: str) -> bytes:
               Paragraph("Shaded bands are event windows. Hourly averages.", small)]
 
     story.append(Paragraph("By tenant", h2))
-    rows = [["Tenant", "Events", "Jobs", "MWh (modeled)", "Compensation", "Most common exclusion"]]
+    rows = [["Tenant", "Events", "Job actions", "Energy (modeled)", "Compensation",
+             "Most common exclusion"]]
     for t in result["tenants"]:
         excl = max(t["exclusions"].items(), key=lambda kv: kv[1])[0] if t["exclusions"] else ""
         rows.append([t["tenant_id"], t["events_participated"], t["jobs_affected"],
-                     f"{t['modeled_mwh']:,.2f}", _money(t["compensation"]), excl.replace("_", " ")])
+                     _energy(t["modeled_mwh"]), _money(t["compensation"]), excl.replace("_", " ")])
     story.append(_table(rows, [1.4 * inch, 0.6 * inch, 0.6 * inch, 1.0 * inch, 1.0 * inch, 2.2 * inch]))
 
     story.append(Paragraph("Largest events", h2))
     top = sorted(result["events"], key=lambda e: -e["firm_mwh"])[:12]
-    rows = [["Start (UTC)", "Type", "Avg price", "Firm MW", "MWh", "Net"]]
+    rows = [["Start (UTC)", "Type", "Avg price", "Firm avg", "Energy", "Net"]]
     for e in top:
         rows.append([e["start"][:16].replace("T", " "), e["kind"], f"${e['avg_price']:,.0f}",
-                     f"{e['firm_avg_mw']:,.3f}", f"{e['firm_mwh']:,.2f}", _money(e["operator_net"])])
+                     _power(e["firm_avg_mw"]), _energy(e["firm_mwh"]), _money(e["operator_net"])])
     story.append(_table(rows, [1.5 * inch, 0.8 * inch, 0.9 * inch, 0.9 * inch, 0.9 * inch, 1.0 * inch]))
 
     story += [PageBreak(), Paragraph("How this was computed", h2), Paragraph(

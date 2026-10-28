@@ -1,7 +1,10 @@
 import { type ButtonHTMLAttributes, type ReactNode } from "react";
 
 export const fmt = {
-  mwh: (x: number) => `${x.toLocaleString(undefined, { maximumFractionDigits: x < 10 ? 2 : 1 })} MWh`,
+  mwh: (x: number) =>
+    Math.abs(x) < 1
+      ? `${(x * 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })} kWh`
+      : `${x.toLocaleString(undefined, { maximumFractionDigits: x < 10 ? 2 : 1 })} MWh`,
   mw: (x: number) =>
     x < 1
       ? `${(x * 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} kW`
