@@ -3,7 +3,11 @@ import pytest
 
 from curtail.grid.sources import classify_event
 from curtail.ingest.parse import (
-    classify_job_type, expand_nodelist, parse_duration_minutes, parse_gpus, parse_time,
+    classify_job_type,
+    expand_nodelist,
+    parse_duration_minutes,
+    parse_gpus,
+    parse_time,
 )
 from curtail.ingest.schemas import suggest_mapping
 from curtail.ingest.service import parse_blackouts

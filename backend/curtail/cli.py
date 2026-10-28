@@ -41,7 +41,12 @@ def supercloud(iso: str, node: str | None, rebuild: bool) -> None:
         build(cfg)
     elif rebuild is False and (cfg.root / "power").exists():
         # Re-synthesize from cached traces (cheap) so config changes apply.
-        from curtail.traces.supercloud import download_power, list_gpu_files, load_gpu_jobs, sample_jobs
+        from curtail.traces.supercloud import (
+            download_power,
+            list_gpu_files,
+            load_gpu_jobs,
+            sample_jobs,
+        )
 
         jobs = load_gpu_jobs(cfg)
         files = sample_jobs(jobs, list_gpu_files(cfg), cfg)

@@ -57,7 +57,7 @@ def test_nothing_when_compensation_exceeds_value():
 
 
 def test_nothing_when_unknown_policy_fields_strict():
-    r, d = run([job()], {"j1": flat(100)}, [policy(min_guaranteed_kw=None)])
+    _r, d = run([job()], {"j1": flat(100)}, [policy(min_guaranteed_kw=None)])
     assert d["j1"].reason == "tenant_min_missing"
     _r, d = run([job()], {"j1": flat(100)}, [policy(opted_in=None)])
     assert d["j1"].reason == "opt_in_unknown"

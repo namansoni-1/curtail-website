@@ -37,3 +37,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint.per-file-ignores]
+# FastAPI's dependency injection idiom.
+"curtail/api/*.py" = ["B008"]

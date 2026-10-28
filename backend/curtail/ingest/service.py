@@ -24,8 +24,8 @@ from curtail.db import (
     TenantPolicyRow,
 )
 from curtail.engine.replay import ReplayInputs
-from curtail.grid.service import merge_events, read_grid, write_grid
 from curtail.engine.types import Blackout, Job, JobType, TenantPolicy
+from curtail.grid.service import merge_events, read_grid, write_grid
 from curtail.ingest.parse import apply_mapping, node_to_job_power, read_table, resample_series
 from curtail.ingest.schemas import DATASETS, suggest_mapping
 from curtail.ingest.validate import jobs_report, series_report, tenants_report
@@ -201,7 +201,7 @@ def apply(db: Session, ds: Dataset, mapping: dict[str, str], options: dict) -> d
             blk, errs = parse_blackouts(r.get("blackout_windows"))
             errors += errs
 
-            def val(k):
+            def val(k, r=r):
                 v = r.get(k)
                 return None if v is None or pd.isna(v) else v
 

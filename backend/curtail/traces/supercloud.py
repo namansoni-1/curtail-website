@@ -281,7 +281,7 @@ def synthesize_site(jobs: pd.DataFrame, power: pd.DataFrame, cfg: SupercloudConf
     facility.to_csv(paths["facility_power"], index=False)
     pd.DataFrame(rows).to_csv(paths["tenants"], index=False)
     meta = {
-        "gpu_jobs_in_window": int(len(jobs)), "jobs_with_measured_power": int(len(measured)),
+        "gpu_jobs_in_window": len(jobs), "jobs_with_measured_power": len(measured),
         "measured_energy_share": float(measured_kw.sum() / max(1e-9, (measured_kw.to_numpy() + est).sum())),
         "per_gpu_kw_estimate": float(per_gpu),
         "gpu_trace_clock_shift_hours": clock_shift_h, "tenant_sla_slack_frac": sla_frac,
