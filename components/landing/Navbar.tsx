@@ -103,6 +103,16 @@ export function Navbar() {
               />
             </a>
           ))}
+          <Link
+            href="/replay"
+            className="group relative text-sm text-gray-500 transition-colors duration-[var(--dur-hover)] ease-[var(--ease-tactile)] hover:text-ink"
+          >
+            Replay
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-signal transition-transform duration-[280ms] ease-[var(--ease-out)] group-hover:scale-x-100"
+            />
+          </Link>
         </div>
 
         <Link
