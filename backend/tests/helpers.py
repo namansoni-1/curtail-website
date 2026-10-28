@@ -26,7 +26,7 @@ def job(jid: str = "j1", tenant: str = "A", jtype: JobType = JobType.TRAINING,
 
 
 def policy(tenant: str = "A", **kw) -> TenantPolicy:
-    base = dict(opted_in=True, max_reduction_pct=100.0, max_reduction_kw=None,
-                min_guaranteed_kw=0.0, compensation_per_mwh=100.0)
+    base = {"opted_in": True, "max_reduction_pct": 100.0, "max_reduction_kw": None,
+                "min_guaranteed_kw": 0.0, "compensation_per_mwh": 100.0}
     base.update(kw)
     return TenantPolicy(tenant, **base)

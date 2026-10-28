@@ -42,7 +42,7 @@ def test_nothing_when_not_opted_in():
 
 
 def test_nothing_when_deadline_missing_strict():
-    r, d = run([job(slack_min=None)], {"j1": flat(100)}, [policy()])
+    _r, d = run([job(slack_min=None)], {"j1": flat(100)}, [policy()])
     assert d["j1"].action == ActionKind.NONE
     assert d["j1"].reason == "deadline_slack_insufficient"
     assert "deadline_missing_assumed_zero_slack" in d["j1"].flags
@@ -59,19 +59,19 @@ def test_nothing_when_compensation_exceeds_value():
 def test_nothing_when_unknown_policy_fields_strict():
     r, d = run([job()], {"j1": flat(100)}, [policy(min_guaranteed_kw=None)])
     assert d["j1"].reason == "tenant_min_missing"
-    r, d = run([job()], {"j1": flat(100)}, [policy(opted_in=None)])
+    _r, d = run([job()], {"j1": flat(100)}, [policy(opted_in=None)])
     assert d["j1"].reason == "opt_in_unknown"
 
 
 def test_nothing_for_unknown_job_type():
-    r, d = run([job(jtype=JobType.UNKNOWN)], {"j1": flat(100)}, [policy()])
+    _r, d = run([job(jtype=JobType.UNKNOWN)], {"j1": flat(100)}, [policy()])
     assert d["j1"].reason == "job_type_unknown"
 
 
 def test_nothing_during_blackout():
     # 18:00 UTC on 2024-07-16 is 14:00 New York time, a Tuesday.
     b = Blackout(days=(1,), start=time(13, 0), end=time(15, 0))
-    r, d = run([job()], {"j1": flat(100)}, [policy(blackouts=(b,))])
+    _r, d = run([job()], {"j1": flat(100)}, [policy(blackouts=(b,))])
     assert d["j1"].reason == "tenant_blackout"
 
 
@@ -105,7 +105,7 @@ def test_max_kw_limit_shared_across_jobs():
     # 20 kW cap less margin = 18 kW for the tenant. Two 100 kW jobs: best fit is
     # 0.9 on both (7.5 + 7.5 = 15) over one at 0.8 (15) tie-broken by less delay.
     jobs = [job("j1"), job("j2")]
-    r, d = run(jobs, {"j1": flat(100), "j2": flat(100)}, [policy(max_reduction_kw=20,
+    r, _d = run(jobs, {"j1": flat(100), "j2": flat(100)}, [policy(max_reduction_kw=20,
                                                                  max_reduction_pct=None)])
     assert r.it_reduction_kw == pytest.approx(flat(15))
     assert all(r.it_reduction_kw <= 18 + 1e-9)
@@ -123,7 +123,7 @@ def test_inference_floor():
 def test_deadline_slack_limits_cap_depth():
     # 30 min window: cap 0.9 delays 0.9 min, 0.8 delays 2.4 min. Slack 2 min x 0.9
     # usable = 1.8 min, so only 0.9 fits; pausing (40 min) does not.
-    r, d = run([job(slack_min=2)], {"j1": flat(100)}, [policy()])
+    _r, d = run([job(slack_min=2)], {"j1": flat(100)}, [policy()])
     assert d["j1"].cap_power_frac == 0.9
     assert d["j1"].delay_minutes == pytest.approx(0.9)
 
@@ -153,7 +153,7 @@ def test_capped_job_ending_in_window_runs_longer():
 def test_independent_tenants_both_contribute():
     jobs = [job("a1", "A"), job("b1", "B")]
     power = {"a1": flat(100), "b1": flat(200)}
-    r, d = run(jobs, power, [policy("A", max_reduction_pct=50), policy("B", opted_in=False)])
+    _r, d = run(jobs, power, [policy("A", max_reduction_pct=50), policy("B", opted_in=False)])
     assert d["a1"].action == ActionKind.CAP
     assert d["b1"].reason == "tenant_not_opted_in"
 

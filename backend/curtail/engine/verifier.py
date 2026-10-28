@@ -57,7 +57,7 @@ def verify_event(decisions: list[Decision], jobs: dict[str, Job],
         if deadline is None and params.missing_deadline_policy == "timelimit":
             deadline = job.timelimit_end
         slack = 0.0 if deadline is None else max(0.0, (deadline - job.end).total_seconds() / 60)
-        if d.delay_minutes > slack * (1 - m) + 1e-6:
+        if job.job_type != JobType.INFERENCE and d.delay_minutes > slack * (1 - m) + 1e-6:
             out.append(Violation("deadline", d.tenant_id, d.job_id,
                                  f"delay {d.delay_minutes:.1f} min > usable slack "
                                  f"{slack * (1 - m):.1f} min"))

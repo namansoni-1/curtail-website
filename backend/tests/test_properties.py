@@ -77,11 +77,14 @@ def test_no_decision_violates_rules(sc):
         if d.action == ActionKind.NONE:
             continue
         j = by_id[d.job_id]
-        assert j.deadline is not None
-        assert j.end + timedelta(minutes=d.delay_minutes) <= j.deadline
         assert j.job_type != JobType.UNKNOWN
         if j.job_type == JobType.INFERENCE:
             assert d.action == ActionKind.CAP
+            keep = 1 - params.gpu_power_share * (1 - d.cap_power_frac)
+            assert keep >= params.inference_floor_frac - 1e-9
+        else:
+            assert j.deadline is not None
+            assert j.end + timedelta(minutes=d.delay_minutes) <= j.deadline
 
 
 def test_random_scenarios_exercise_every_action():

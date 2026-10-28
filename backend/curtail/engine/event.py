@@ -161,7 +161,9 @@ def solve_event(spec: EventSpec, jobs: list[Job], power: dict[str, np.ndarray],
         if not opts:
             d.reason = "no_action_available"
             continue
-        usable = slack * (1.0 - params.safety_margin)
+        # Inference has no batch deadline: its protection is the power floor,
+        # already enforced in job_options. Everything else must fit its slack.
+        usable = np.inf if j.job_type == JobType.INFERENCE else slack * (1.0 - params.safety_margin)
         opts = [o for o in opts if o.delay_minutes <= usable + 1e-9 and o.reduction.sum() > 0]
         if not opts:
             d.reason = "deadline_slack_insufficient"
