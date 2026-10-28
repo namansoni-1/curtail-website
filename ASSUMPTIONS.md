@@ -17,7 +17,7 @@ results and the PDF.
 | `price_threshold_per_mwh` | 200 | A price event is a run of intervals with price ≥ this. |
 | `include_grid_events` | true | DR and emergency flags also open events. When a grid event and a price spike overlap, the event takes precedence. |
 | `min_event_minutes` | 15 | Shorter runs are ignored. |
-| `max_event_minutes` | 240 | Longer runs are split into chunks. Each chunk is optimized on its own, and job deadlines are checked per chunk only (see weaknesses). |
+| `max_event_minutes` | 240 | Longer runs are split into chunks, each optimized on its own. A job's delay accumulates across chunks and events: later decisions only get the slack that is left. |
 | `interval_minutes` | 5 | Every series is resampled to this interval. Missing intervals are reported and never filled in silently. |
 
 ## Safety
@@ -60,6 +60,10 @@ is tighter should get a higher floor.
 | `checkpoint_minutes` | 10 | The job keeps drawing full power while it checkpoints. The reduction starts after this. |
 | `restart_minutes` | 10 | Work lost on resume, added to the delay. |
 | `paused_power_frac` | 0.25 | A paused job still draws this fraction of its pre-pause power (idle GPUs and host), even past the time it would have finished. |
+
+Later events still use each job's recorded power trace. The engine does not
+re-time a job's power to reflect earlier delays, only its remaining deadline
+slack.
 
 Only training and batch jobs that are already running can be paused, and only
 if they are not marked non-checkpointable. Pause delay = window + restart.

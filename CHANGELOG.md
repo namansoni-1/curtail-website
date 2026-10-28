@@ -59,5 +59,9 @@
   - ingestion parsers
   - trace clock alignment
   - an end-to-end upload-to-PDF test, run on SQLite and on Postgres 16
+- Fixed: a job's delay now accumulates across events and across the chunks
+  of a long event. Before this, a job slowed in several consecutive chunks
+  could miss its deadline while each chunk passed on its own. On the
+  Supercloud validation this cut the safe reduction from 68.4 to 42.1 kWh.
 - `docker-compose.yml` with TimescaleDB, the API and the web app.
 - `ASSUMPTIONS.md` and `docs/VALIDATION.md`.
