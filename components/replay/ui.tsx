@@ -7,7 +7,7 @@ export const fmt = {
       : `${x.toLocaleString(undefined, { maximumFractionDigits: x < 10 ? 2 : 1 })} MWh`,
   mw: (x: number) =>
     x < 1
-      ? `${(x * 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} kW`
+      ? `${(x * 1000).toLocaleString(undefined, { maximumFractionDigits: x < 0.01 ? 2 : 0 })} kW`
       : `${x.toLocaleString(undefined, { maximumFractionDigits: 2 })} MW`,
   kw: (x: number) => `${x.toLocaleString(undefined, { maximumFractionDigits: 1 })} kW`,
   usd: (x: number) =>
@@ -21,7 +21,8 @@ export const fmt = {
       minute: "2-digit",
     }),
   date: (iso: string) =>
-    new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }),
+    // Period bounds are UTC interval starts; show them as dates in UTC.
+    new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }),
   label: (s: string) => s.replaceAll("_", " "),
 };
 
