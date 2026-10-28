@@ -155,8 +155,11 @@ def solve_event(spec: EventSpec, jobs: list[Job], power: dict[str, np.ndarray],
         if j.job_type == JobType.UNKNOWN:
             d.reason, d.flags = "job_type_unknown", ["job_type_unknown"]
             continue
-        slack, sflags = job_slack_minutes(j, params, end_estimates.get(j.job_id, j.end))
-        d.slack_minutes, d.flags = slack, sflags
+        if j.job_type != JobType.INFERENCE:
+            slack, sflags = job_slack_minutes(j, params, end_estimates.get(j.job_id, j.end))
+            d.slack_minutes, d.flags = slack, sflags
+        else:
+            slack = 0.0
         opts = job_options(j, p, spec.ws, spec.we, params)
         if not opts:
             d.reason = "no_action_available"
