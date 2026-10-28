@@ -165,11 +165,17 @@ if engine.dialect.name == "sqlite":
 
 def init_db(bind=None) -> None:
     bind = bind or engine
+    timescale = False
     if bind.dialect.name == "postgresql":
-        with bind.begin() as c:
-            c.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb"))
+        # TimescaleDB is optional: plain Postgres works, just without hypertables.
+        try:
+            with bind.begin() as c:
+                c.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb"))
+            timescale = True
+        except Exception:  # noqa: BLE001
+            timescale = False
     Base.metadata.create_all(bind)
-    if bind.dialect.name == "postgresql":
+    if timescale:
         with bind.begin() as c:
             for table, col in HYPERTABLES.items():
                 c.execute(text(
